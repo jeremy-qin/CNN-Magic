@@ -11,7 +11,7 @@ import cnn
 from cnn import BasicNet
 
 batch_dim = 64
-epoch_count = 15
+epoch_count = 30
 
 device_string = "cuda" if torch.cuda.is_available() else "cpu"
 device = torch.device(device_string)
@@ -19,7 +19,7 @@ device = torch.device(device_string)
 torch.manual_seed(0)
 
 dataset_root = "data"
-dataset_name = "CIFAR10"
+dataset_name = "CIFAR100"
 
 dataset_transforms = transforms.Compose([transforms.ToTensor(),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
@@ -46,6 +46,20 @@ elif dataset_name == "CIFAR10":
     )
 
     dataset_test = datasets.CIFAR10(
+        root = dataset_root,
+        train = False,
+        transform = dataset_transforms,
+    )
+
+elif dataset_name == "CIFAR100":
+    dataset_train = datasets.CIFAR100(
+        root = dataset_root,
+        train = True,
+        download = True,
+        transform = dataset_transforms,
+    )
+
+    dataset_test = datasets.CIFAR100(
         root = dataset_root,
         train = False,
         transform = dataset_transforms,
