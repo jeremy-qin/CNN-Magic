@@ -111,7 +111,8 @@ def experiment(params):
     from contextlib import nullcontext
     import torch
     import cnn
-    from cnn import BasicNet
+    from cnn import BasicNet, MNISTNet
+    from tqdm import tqdm
     # import wandb
     
     batch_dim = params["batch_dim"]
@@ -145,10 +146,11 @@ def experiment(params):
         pin_memory=(device_string == "cuda"),
     )
     if dataset == "MNIST":
-        model = BasicNet(len(dataset_train.classes), in_channels=1).to(device)
+        model = MNISTNet(len(dataset_train.classes), in_channels=1).to(device)
     else:
         model = BasicNet(len(dataset_train.classes), in_channels=3).to(device)
 
+    print(model)
     criterion = loss_function(loss)
     optimizer = optimizer_function(optimizer_string, model, lr=learning_rate)
     # wandb.init(project="Torch Points 3D", name = log_name, entity="qinjerem")
