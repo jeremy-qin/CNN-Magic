@@ -5,12 +5,11 @@ default_params = {
     "output_root": "outputs",
     "seed": 21,
     "data_root": "data",
-    "dataset": "MNIST",
+    "dataset": "CIFAR10",
     "normals": "True",
     "learning_rate": 1e-3,
     "criterion": "CrossEntropyLoss",
     "optimizer": "Adam"
-
 }
 
 def defaults(dictionary, dictionary_defaults):
@@ -114,7 +113,7 @@ def experiment(params):
     from cnn import BasicNet, MNISTNet
     from tqdm import tqdm
     from time import sleep
-    # import wandb
+    import wandb
     
     batch_dim = params["batch_dim"]
     epoch_count = params["epoch_count"]
@@ -159,6 +158,7 @@ def experiment(params):
     
     for epoch in range(epoch_count):
         correct = 0
+        total_loss = 0
         total = 0 
         with tqdm(loader_train, unit="batch", bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}') as tepoch:
             for (images, labels) in tepoch:
@@ -170,6 +170,7 @@ def experiment(params):
                 #Forward pass
                 outputs = model(images)
                 loss = criterion(outputs, labels)
+                total_loss += loss
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
@@ -183,6 +184,10 @@ def experiment(params):
                 sleep(0.1)
         # print ('Epoch [{}/{}], Accuracy: {:.3f} , Loss: {:.3f}' 
         #             .format(epoch+1, epoch_count,100 * correct / total, loss.item()))
+
+            wandb.log({"loss": total_loss / total,
+                        "accuracy": 100*correct / total,
+                        "inputs": wandb.Image(images)})
         
     with torch.no_grad():
         correct = 0
@@ -205,6 +210,13 @@ def experiment(params):
 if __name__ == "__main__":
     import json
     import argparse
+    import wandb
+
+    from datetime import datetime
+
+    now = datetime.now()
+
+    current_time = now.strftime("%H:%M:%S")
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--params", "-p", type=str, help="JSON params file")
@@ -215,12 +227,18 @@ if __name__ == "__main__":
     if arguments.direct is not None:
         params = json.loads(arguments.direct)
     elif arguments.params is not None:
-        with open(arguments.file) as file:
+        with open(arguments.params) as file:
             params = json.load(file)
     else:
         params = {}
 
     params = defaults(params, default_params)
+    log_name = params["dataset"] + "-" + current_time
+    wandb.init(project="CNN-Magic", name = log_name, entity="qinjerem", config=params)
 
     experiment(params)
+
+    wandb.finish()
+    
+    
 
