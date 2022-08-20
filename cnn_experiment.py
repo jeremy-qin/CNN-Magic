@@ -1,5 +1,5 @@
 default_params = {
-    "batch_dim": 16,
+    "batch_dim": 64,
     "epoch_count": 10,
     "device_string": "cuda",
     "output_root": "outputs",
@@ -113,6 +113,7 @@ def experiment(params):
     import cnn
     from cnn import BasicNet, MNISTNet
     from tqdm import tqdm
+    from time import sleep
     # import wandb
     
     batch_dim = params["batch_dim"]
@@ -159,26 +160,29 @@ def experiment(params):
     for epoch in range(epoch_count):
         correct = 0
         total = 0 
-        for i, (images, labels) in enumerate(loader_train):
-            
-            images = images.to(device)
-            labels = labels.to(device)
-            
-            #Forward pass
-            outputs = model(images)
-            loss = criterion(outputs, labels)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+        with tqdm(loader_train, unit="batch", bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}') as tepoch:
+            for (images, labels) in tepoch:
+
+                tepoch.set_description('Epoch [{}/{}]'.format(epoch+1, epoch_count))
+                images = images.to(device)
+                labels = labels.to(device)
                 
-            # Backward and optimize
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+                #Forward pass
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
                     
-    
-        print ('Epoch [{}/{}], Accuracy: {:.3f} , Loss: {:.3f}' 
-                    .format(epoch+1, epoch_count,100 * correct / total, loss.item()))
+                # Backward and optimize
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                    
+                tepoch.set_postfix(loss = loss.item(), accuracy = 100 * correct / total )
+                sleep(0.1)
+        # print ('Epoch [{}/{}], Accuracy: {:.3f} , Loss: {:.3f}' 
+        #             .format(epoch+1, epoch_count,100 * correct / total, loss.item()))
         
     with torch.no_grad():
         correct = 0
