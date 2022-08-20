@@ -3,10 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class BasicNet(nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, in_channels):
         super().__init__()
         self.layer1 = nn.Sequential(
-            nn.Conv2d(3, 6, kernel_size=3, stride=1, padding=0),
+            nn.Conv2d(in_channels, 6, kernel_size=3, stride=1, padding=0),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size = 2, stride = 2))
         self.layer2 = nn.Sequential(
@@ -17,7 +17,7 @@ class BasicNet(nn.Module):
             nn.Conv2d(16, 120, kernel_size=3, stride=1),
             nn.ReLU()
         )
-        self.fc1 = nn.Linear(1920, 512)
+        self.fc1 = nn.Linear(1080, 512)
         self.relu1 = nn.ReLU()
         self.fc2 = nn.Linear(512, 256)
         self.relu2 = nn.ReLU()
@@ -36,5 +36,3 @@ class BasicNet(nn.Module):
         return out
 
 
-model = BasicNet(10)
-print(model)
