@@ -155,7 +155,7 @@ def experiment(params):
     optimizer = optimizer_function(optimizer_string, model, lr=learning_rate)
     # wandb.init(project="Torch Points 3D", name = log_name, entity="qinjerem")
 
-    
+    wandb.watch(model)
     for epoch in range(epoch_count):
         correct = 0
         total_loss = 0
@@ -182,16 +182,18 @@ def experiment(params):
                     
                 tepoch.set_postfix(loss = loss.item(), accuracy = 100 * correct / total )
                 sleep(0.1)
+                wandb.log({"loss": loss.item(), "accuracy" : 100 * correct/ total})
         # print ('Epoch [{}/{}], Accuracy: {:.3f} , Loss: {:.3f}' 
         #             .format(epoch+1, epoch_count,100 * correct / total, loss.item()))
 
-            wandb.log({"loss": total_loss / total,
-                        "accuracy": 100*correct / total,
-                        "inputs": wandb.Image(images)})
+            wandb.log({"training loss": total_loss / total,
+                        "training accuracy": 100*correct / total,
+                        "inputs": wandb.Image(images),
+                        "epoch": epoch})
         
     with torch.no_grad():
         correct = 0
-        total = 0
+        total = len(dataset_test)
         loss = 0
         for images, labels in loader_test:
             images = images.to(device)
@@ -199,13 +201,14 @@ def experiment(params):
             outputs = model(images)
             loss += criterion(outputs, labels)
             _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
     print(f"Test set: Average loss: {loss / total:.3f}, Accuracy: {correct / total :.3f}")
 
+    wandb.log({"Test loss": loss/total, "Test accuracy": 100 * correct/total})
 
-    return
+
+    
 
 if __name__ == "__main__":
     import json

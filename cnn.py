@@ -16,13 +16,13 @@ class BasicNet(nn.Module):
         self.layer3 = nn.Sequential(
             nn.Conv2d(64, 128, kernel_size=3, stride=1),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size = 2, stride = 2))
+            nn.AdaptiveMaxPool2d(1))
         
-        self.fc1 = nn.Linear(128 * 4, 256)
+        self.fc1 = nn.Linear(128 * 4, 64)
         self.relu1 = nn.ReLU()
-        self.fc2 = nn.Linear(256, 128)
+        self.fc2 = nn.Linear(64, 32)
         self.relu2 = nn.ReLU()
-        self.fc3 = nn.Linear(128, num_classes)
+        self.fc3 = nn.Linear(32, num_classes)
         
     def forward(self, x):
         out = self.layer1(x)
@@ -51,7 +51,7 @@ class MNISTNet(nn.Module):
         self.layer3 = nn.Sequential(
             nn.Conv2d(64, 128, kernel_size=3, stride=1),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size = 2, stride = 2))
+            nn.AdaptiveMaxPool2d(1))
         
         self.fc1 = nn.Linear(128 * 1, 64)
         self.relu1 = nn.ReLU()
