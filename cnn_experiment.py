@@ -110,10 +110,11 @@ def experiment(params):
     from contextlib import nullcontext
     import torch
     import cnn
-    from cnn import BasicNet, MNISTNet
+    from cnn import BasicNet, MNISTNet, BasicNet100
     from tqdm import tqdm
     from time import sleep
     import wandb
+    from time import perf_counter
     
     batch_dim = params["batch_dim"]
     epoch_count = params["epoch_count"]
@@ -147,8 +148,10 @@ def experiment(params):
     )
     if dataset == "MNIST":
         model = MNISTNet(len(dataset_train.classes), in_channels=1).to(device)
-    else:
+    elif dataset == "CIFAR10":
         model = BasicNet(len(dataset_train.classes), in_channels=3).to(device)
+    else:
+        model = BasicNet100(len(dataset_train.classes), in_channels=3).to(device)
 
     print(model)
     criterion = loss_function(loss)
@@ -156,6 +159,7 @@ def experiment(params):
     # wandb.init(project="Torch Points 3D", name = log_name, entity="qinjerem")
 
     wandb.watch(model)
+    time_train_start = perf_counter()
     for epoch in range(epoch_count):
         correct = 0
         total_loss = 0
@@ -181,16 +185,18 @@ def experiment(params):
                 optimizer.step()
                     
                 tepoch.set_postfix(loss = loss.item(), accuracy = 100 * correct / total )
-                sleep(0.1)
+                # sleep(0.1)
                 wandb.log({"loss": loss.item(), "accuracy" : 100 * correct/ total})
         # print ('Epoch [{}/{}], Accuracy: {:.3f} , Loss: {:.3f}' 
         #             .format(epoch+1, epoch_count,100 * correct / total, loss.item()))
 
             wandb.log({"training loss": total_loss / total,
                         "training accuracy": 100*correct / total,
-                        "inputs": wandb.Image(images),
                         "epoch": epoch})
-        
+        wandb.log({"inputs": wandb.Image(images)})
+    time_train_end = perf_counter()
+    wandb.log({"training time": time_train_end - time_train_start})
+
     with torch.no_grad():
         correct = 0
         total = len(dataset_test)
